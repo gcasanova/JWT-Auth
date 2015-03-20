@@ -1,2 +1,2 @@
 # PlanOut-Auth
-JWT authentication system for PlanOut
+JWT authentication system with Facebook login for mobile application (no backend persistence required)

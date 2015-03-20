@@ -21,21 +21,21 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 
 public class SecretGenerator {
-	
+
 	@Value("secret.salt")
 	private static String salt;
-	
+
 	public static String secret() throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		md.update((LocalDate.now(ZoneOffset.UTC).toString() + salt).getBytes());
 		return new String(md.digest(), "UTF-8");
 	}
-	
+
 	public static Pair<String, String> challenge() throws NoSuchAlgorithmException, UnsupportedEncodingException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 		String challenge = UUID.randomUUID().toString();
 		Cipher c = Cipher.getInstance("DES");
-	    c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(Arrays.copyOfRange(secret().getBytes(), 0, 8), "DES"));
-	    String result = new String(Base64.encodeBase64(new String(c.doFinal(challenge.getBytes()), "UTF-8").getBytes()), "UTF-8").subSequence(0, 36).toString();
-	    return new ImmutablePair<String, String>(challenge, result);
+		c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(Arrays.copyOfRange(secret().getBytes(), 0, 8), "DES"));
+		String result = new String(Base64.encodeBase64(new String(c.doFinal(challenge.getBytes()), "UTF-8").getBytes()), "UTF-8").subSequence(0, 36).toString();
+		return new ImmutablePair<String, String>(challenge, result);
 	}
 }

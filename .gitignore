@@ -30,3 +30,6 @@ buildNumber.properties
 .DS_Store
 src/main/resources/application.properties
 src/main/resources/keystore.jks
+
+# Spring Boot
+.springBeans

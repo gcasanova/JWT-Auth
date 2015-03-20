@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +53,8 @@ public class AuthController {
 	private FacebookService facebookService;
 
 	@RequestMapping(value = "/challenge", method = RequestMethod.GET)
-	public ResponseEntity<Map<String, String>> challenge(@RequestHeader(value = "FacebookId", required = false) Long facebookId, @RequestHeader(value = "FacebookToken", required = false) String facebookToken) {
+	public ResponseEntity<Map<String, String>> challenge(@RequestHeader(value = "FacebookId", required = false) Long facebookId, 
+			@RequestHeader(value = "FacebookToken", required = false) String facebookToken, HttpServletRequest request) {
 		try {
 			boolean isAuthenticated = false;
 			if (facebookId != null && facebookToken != null) {
@@ -67,6 +70,7 @@ public class AuthController {
 
 			SecretChallenge secretChallenge = new SecretChallenge();
 			secretChallenge.setChallenge(pair.getRight());
+			secretChallenge.setIpAddress(request.getRemoteAddr());
 			secretChallenge.setAuthenticated(isAuthenticated);
 
 			this.redis.opsForValue().set(userId, new JSONObject(secretChallenge).toString());
@@ -84,10 +88,10 @@ public class AuthController {
 	}
 
 	@RequestMapping(value = "/create", method = RequestMethod.GET)
-	public ResponseEntity<Map<String, String>> create(@RequestHeader("Secret") String secret, @RequestHeader("id") String id) {
+	public ResponseEntity<Map<String, String>> create(@RequestHeader("id") String id, @RequestHeader("Secret") String secret, HttpServletRequest request) {
 		try {
 			SecretChallenge secretChallenge = new ObjectMapper().readValue(this.redis.opsForValue().get(id), SecretChallenge.class);
-			if (secretChallenge.getChallenge().equals(secret)) {
+			if (secretChallenge.getChallenge().equals(secret) && secretChallenge.getIpAddress().equals(request.getRemoteAddr())) {
 				KeyStore ks = KeyStore.getInstance("JKS");
 				ks.load(new ClassPathResource("keystore.jks").getInputStream(), keystorePassword.toCharArray());
 				PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) ks.getEntry(keystoreAliasName, new KeyStore.PasswordProtection(keystoreAliasPassword.toCharArray()));

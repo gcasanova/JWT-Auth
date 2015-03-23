@@ -3,8 +3,7 @@ package auth.web;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-import java.security.KeyStore;
-import java.security.KeyStore.PrivateKeyEntry;
+import java.security.PrivateKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -19,8 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.tuple.Pair;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import auth.domain.KeyReader;
 import auth.domain.SecretGenerator;
 import auth.domain.entities.SecretChallenge;
 import auth.service.FacebookService;
@@ -38,15 +36,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-
-	@Value("${keystore.password}")
-	private String keystorePassword;
-
-	@Value("${keystore.jwt.alias.name}")
-	private String keystoreAliasName;
-
-	@Value("${keystore.jwt.alias.password}")
-	private String keystoreAliasPassword;
 
 	@Autowired
 	private RedisTemplate<String, String> redis;
@@ -93,16 +82,14 @@ public class AuthController {
 		try {
 			SecretChallenge secretChallenge = new ObjectMapper().readValue(this.redis.opsForValue().get(id), SecretChallenge.class);
 			if (secretChallenge.getChallenge().equals(challenge) && secretChallenge.getIpAddress().equals(request.getRemoteAddr())) {
-				KeyStore ks = KeyStore.getInstance("JKS");
-				ks.load(new ClassPathResource("keystore.jks").getInputStream(), keystorePassword.toCharArray());
-				PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) ks.getEntry(keystoreAliasName, new KeyStore.PasswordProtection(keystoreAliasPassword.toCharArray()));
 				long expiration = secretChallenge.isAuthenticated() ? 6 : 3;
 				Instant expirationInstant = LocalDateTime.now(ZoneOffset.UTC).plusHours(expiration).atZone(ZoneOffset.UTC).toInstant();
+				PrivateKey privateKey = KeyReader.getPrivateKey("keys/private-key.der");
 
-				String token = Jwts.builder().setSubject("id").
+				String token = Jwts.builder().setSubject(id).
 						setExpiration(Date.from(expirationInstant)).
 						setIssuer("PlanOut").
-						signWith(SignatureAlgorithm.RS512, entry.getPrivateKey()).compact();
+						signWith(SignatureAlgorithm.RS512, privateKey).compact();
 
 				Map<String, String> result = new HashMap<String, String>();
 				result.put("token", token);
@@ -113,7 +100,6 @@ public class AuthController {
 		} catch (Exception e) {
 			Map<String, String> result = new HashMap<String, String>();
 			result.put("error", e.getMessage());
-
 			return new ResponseEntity<Map<String, String>>(result, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}

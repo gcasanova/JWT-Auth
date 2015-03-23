@@ -33,3 +33,6 @@ src/main/resources/keystore.jks
 
 # Spring Boot
 .springBeans
+
+# RSA private key for JWT encryption
+src/main/resources/keys/private-key.der

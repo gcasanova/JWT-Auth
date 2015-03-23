@@ -35,7 +35,7 @@ public class SecretGenerator {
 		String challenge = UUID.randomUUID().toString();
 		Cipher c = Cipher.getInstance("DES");
 		c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(Arrays.copyOfRange(secret().getBytes(), 0, 8), "DES"));
-		String result = new String(Base64.encodeBase64(new String(c.doFinal(challenge.getBytes()), "UTF-8").getBytes()), "UTF-8").subSequence(0, 36).toString();
+		String result = new String(Base64.encodeBase64(new String(c.doFinal(challenge.getBytes()), "UTF-8").getBytes()), "UTF-8").substring(0, 36);
 		return new ImmutablePair<String, String>(challenge, result);
 	}
 }

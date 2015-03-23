@@ -5,6 +5,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 import java.security.KeyStore;
 import java.security.KeyStore.PrivateKeyEntry;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -78,7 +79,7 @@ public class AuthController {
 
 			Map<String, String> result = new HashMap<String, String>();
 			result.put("challenge", pair.getLeft());
-			result.put("id", userId);
+			result.put("identifier", userId);
 			return new ResponseEntity<Map<String, String>>(result, HttpStatus.ACCEPTED);
 		} catch (Exception e) {
 			Map<String, String> result = new HashMap<String, String>();
@@ -87,23 +88,25 @@ public class AuthController {
 		}
 	}
 
-	@RequestMapping(value = "/create", method = RequestMethod.GET)
-	public ResponseEntity<Map<String, String>> create(@RequestHeader("id") String id, @RequestHeader("Secret") String secret, HttpServletRequest request) {
+	@RequestMapping(value = "/token", method = RequestMethod.GET)
+	public ResponseEntity<Map<String, String>> create(@RequestHeader("Identifier") String id, @RequestHeader("Challenge") String challenge, HttpServletRequest request) {
 		try {
 			SecretChallenge secretChallenge = new ObjectMapper().readValue(this.redis.opsForValue().get(id), SecretChallenge.class);
-			if (secretChallenge.getChallenge().equals(secret) && secretChallenge.getIpAddress().equals(request.getRemoteAddr())) {
+			if (secretChallenge.getChallenge().equals(challenge) && secretChallenge.getIpAddress().equals(request.getRemoteAddr())) {
 				KeyStore ks = KeyStore.getInstance("JKS");
 				ks.load(new ClassPathResource("keystore.jks").getInputStream(), keystorePassword.toCharArray());
 				PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) ks.getEntry(keystoreAliasName, new KeyStore.PasswordProtection(keystoreAliasPassword.toCharArray()));
 				long expiration = secretChallenge.isAuthenticated() ? 6 : 3;
+				Instant expirationInstant = LocalDateTime.now(ZoneOffset.UTC).plusHours(expiration).atZone(ZoneOffset.UTC).toInstant();
 
 				String token = Jwts.builder().setSubject("id").
-						setExpiration(Date.from(LocalDateTime.now(ZoneOffset.UTC).plusHours(expiration).atZone(ZoneOffset.UTC).toInstant())).
+						setExpiration(Date.from(expirationInstant)).
 						setIssuer("PlanOut").
 						signWith(SignatureAlgorithm.RS512, entry.getPrivateKey()).compact();
 
 				Map<String, String> result = new HashMap<String, String>();
 				result.put("token", token);
+				result.put("expiration", String.valueOf(expirationInstant.toEpochMilli()));
 				return new ResponseEntity<Map<String, String>>(result, HttpStatus.ACCEPTED);
 			}
 			return new ResponseEntity<Map<String, String>>(HttpStatus.FORBIDDEN);

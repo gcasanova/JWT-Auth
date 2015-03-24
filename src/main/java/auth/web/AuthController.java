@@ -38,9 +38,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class AuthController {
 
 	@Autowired
-	private RedisTemplate<String, String> redis;
-	@Autowired
 	private FacebookService facebookService;
+	@Autowired
+	private RedisTemplate<String, String> redis;
 
 	@RequestMapping(value = "/challenge", method = RequestMethod.GET)
 	public ResponseEntity<Map<String, String>> challenge(@RequestHeader(value = "FacebookId", required = false) Long facebookId, 
@@ -85,10 +85,11 @@ public class AuthController {
 				long expiration = secretChallenge.isAuthenticated() ? 6 : 3;
 				Instant expirationInstant = LocalDateTime.now(ZoneOffset.UTC).plusHours(expiration).atZone(ZoneOffset.UTC).toInstant();
 				PrivateKey privateKey = KeyReader.getPrivateKey("keys/private-key.der");
-
+				
 				String token = Jwts.builder().setSubject(id).
 						setExpiration(Date.from(expirationInstant)).
 						setIssuer("PlanOut").
+						setHeaderParam("authenticated", String.valueOf(secretChallenge.isAuthenticated())).
 						signWith(SignatureAlgorithm.RS512, privateKey).compact();
 
 				Map<String, String> result = new HashMap<String, String>();

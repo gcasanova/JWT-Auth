@@ -28,7 +28,8 @@ public class SecretGenerator {
 	public static String secret() throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		md.update((LocalDate.now(ZoneOffset.UTC).toString() + salt).getBytes());
-		return new String(md.digest(), "UTF-8");
+		String secret = new String(Base64.encodeBase64(new String(md.digest(), "UTF-8").getBytes()));
+		return secret;
 	}
 
 	public static Pair<String, String> challenge() throws NoSuchAlgorithmException, UnsupportedEncodingException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {

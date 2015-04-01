@@ -43,6 +43,7 @@ public class FacebookResponse implements Serializable {
 		private String application;
 		private Error error;
 		private Timestamp expiresAt;
+		private Timestamp issuedAt;
 		private boolean isValid;
 		private List<String> scopes;
 		private String userId;
@@ -78,6 +79,14 @@ public class FacebookResponse implements Serializable {
 		}
 		public void setExpiresAt(Timestamp expiresAt) {
 			this.expiresAt = expiresAt;
+		}
+
+		@JsonProperty("issued_at")
+		public Timestamp getIssuedAt() {
+			return issuedAt;
+		}
+		public void setIssuedAt(Timestamp issuedAt) {
+			this.issuedAt = issuedAt;
 		}
 
 		@JsonProperty("is_valid")

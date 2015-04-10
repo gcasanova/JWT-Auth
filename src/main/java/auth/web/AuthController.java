@@ -51,7 +51,7 @@ public class AuthController {
 				if (this.facebookService.isTokenValid(facebookId, facebookToken)) {
 					isAuthenticated = true;
 				} else {
-					return new ResponseEntity<Map<String, String>>(HttpStatus.FORBIDDEN);
+					return new ResponseEntity<Map<String, String>>(HttpStatus.UNAUTHORIZED);
 				}
 			}
 
@@ -97,7 +97,7 @@ public class AuthController {
 				result.put("expiration", String.valueOf(expirationInstant.toEpochMilli()));
 				return new ResponseEntity<Map<String, String>>(result, HttpStatus.ACCEPTED);
 			}
-			return new ResponseEntity<Map<String, String>>(HttpStatus.FORBIDDEN);
+			return new ResponseEntity<Map<String, String>>(HttpStatus.UNAUTHORIZED);
 		} catch (Exception e) {
 			Map<String, String> result = new HashMap<String, String>();
 			result.put("error", e.getMessage());

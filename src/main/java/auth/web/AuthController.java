@@ -40,6 +40,8 @@ public class AuthController {
 	@Autowired
 	private FacebookService facebookService;
 	@Autowired
+	private SecretGenerator secretGenerator;
+	@Autowired
 	private RedisTemplate<String, String> redis;
 
 	@RequestMapping(value = "/challenge", method = RequestMethod.GET)
@@ -56,7 +58,7 @@ public class AuthController {
 			}
 
 			String userId = isAuthenticated ? String.valueOf(facebookId) : UUID.randomUUID().toString();
-			Pair<String, String> pair = SecretGenerator.challenge();
+			Pair<String, String> pair = secretGenerator.challenge();
 
 			SecretChallenge secretChallenge = new SecretChallenge();
 			secretChallenge.setChallenge(pair.getRight());

@@ -19,24 +19,27 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SecretGenerator {
 
-	@Value("secret.salt")
-	private static String salt;
+	@Value("${secret.salt}")
+	private String salt;
 
-	public static String secret() throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		MessageDigest md = MessageDigest.getInstance("SHA-256");
-		md.update((LocalDate.now(ZoneOffset.UTC).toString() + salt).getBytes());
-		String secret = new String(Base64.encodeBase64(new String(md.digest(), "UTF-8").getBytes()));
-		return secret;
-	}
-
-	public static Pair<String, String> challenge() throws NoSuchAlgorithmException, UnsupportedEncodingException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+	public Pair<String, String> challenge() throws NoSuchAlgorithmException, UnsupportedEncodingException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 		String challenge = UUID.randomUUID().toString();
 		Cipher c = Cipher.getInstance("DES");
 		c.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(Arrays.copyOfRange(secret().getBytes(), 0, 8), "DES"));
 		String result = new String(Base64.encodeBase64(new String(c.doFinal(challenge.getBytes()), "UTF-8").getBytes()), "UTF-8").substring(0, 36);
 		return new ImmutablePair<String, String>(challenge, result);
+	}
+	
+	private String secret() throws NoSuchAlgorithmException, UnsupportedEncodingException {
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		md.update((LocalDate.now(ZoneOffset.UTC).toString() + salt).getBytes());
+		System.out.println("local date now plus salt is:" + LocalDate.now(ZoneOffset.UTC).toString() + salt);
+		String secret = new String(Base64.encodeBase64(new String(md.digest(), "UTF-8").getBytes()));
+		return secret;
 	}
 }

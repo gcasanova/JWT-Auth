@@ -38,7 +38,6 @@ public class SecretGenerator {
 	private String secret() throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		md.update((LocalDate.now(ZoneOffset.UTC).toString() + salt).getBytes());
-		System.out.println("local date now plus salt is:" + LocalDate.now(ZoneOffset.UTC).toString() + salt);
 		String secret = new String(Base64.encodeBase64(new String(md.digest(), "UTF-8").getBytes()));
 		return secret;
 	}

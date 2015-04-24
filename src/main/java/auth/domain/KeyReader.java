@@ -32,7 +32,7 @@ public class KeyReader {
 			return kf.generatePrivate(spec);
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
 			Logger logger = LogManager.getLogger(KeyReader.class.getName());
-			logger.debug("Private key retrieval failed: " + e.getMessage() + ". " + e.getStackTrace());
+			logger.error("Private key retrieval failed: " + e.getMessage() + ". " + e.getStackTrace());
 			e.printStackTrace();
 		}
 		return null;
@@ -52,7 +52,7 @@ public class KeyReader {
 			return kf.generatePublic(spec);
 		} catch (InvalidKeySpecException | NoSuchAlgorithmException | IOException e) {
 			Logger logger = LogManager.getLogger(KeyReader.class.getName());
-			logger.debug("Private key retrieval failed: " + e.getMessage() + ". " + e.getStackTrace());
+			logger.error("Private key retrieval failed: " + e.getMessage() + ". " + e.getStackTrace());
 			e.printStackTrace();
 		}
 		return null;
